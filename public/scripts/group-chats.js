@@ -1007,19 +1007,27 @@ function activateSwipe(members) {
         }
     }
 
-    // pre-update group chat swipe
-    if (!lastMessage.original_avatar) {
-        const matches = characters.filter(x => x.name == lastMessage.name);
-
-        for (const match of matches) {
-            if (members.includes(match.avatar)) {
-                activatedNames.push(match.avatar);
-                break;
+    // Handle both pre-update and /sendas messages
+    if (lastMessage.original_avatar) {
+        activatedNames.push(lastMessage.original_avatar);
+    } else {
+        // Try to match by name first (for /sendas messages)
+        const namedChar = characters.find(x => x.name === lastMessage.name);
+        if (namedChar) {
+            // For group chat, verify member is in group
+            if (!members.length || members.includes(namedChar.avatar)) {
+                activatedNames.push(namedChar.avatar);
+            }
+        } else {
+            // Legacy fallback - look for any character matching name
+            const matches = characters.filter(x => x.name == lastMessage.name);
+            for (const match of matches) {
+                if (!members.length || members.includes(match.avatar)) {
+                    activatedNames.push(match.avatar);
+                    break;
+                }
             }
         }
-    }
-    else {
-        activatedNames.push(lastMessage.original_avatar);
     }
 
     const memberIds = activatedNames
